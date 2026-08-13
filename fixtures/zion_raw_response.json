@@ -1,0 +1,55 @@
+{
+  "data": [
+    {
+      "name": "Angels Landing",
+      "geometry": {
+        "lat": 37.2692,
+        "lon": -112.9481
+      }
+    },
+    {
+      "name": "The Narrows",
+      "geometry": {
+        "lat": 37.2982,
+        "lon": -112.9478
+      }
+    },
+    {
+      "name": "Emerald Pools",
+      "geometry": {
+        "lat": 37.2531,
+        "lon": -112.9553
+      }
+    },
+    {
+      "name": "Watchman Trail",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.9871,
+          37.1917
+        ]
+      }
+    },
+    {
+      "name": "Canyon Overlook",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.9364,
+          37.2151
+        ]
+      }
+    },
+    {
+      "name": "Riverside Walk",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.9481,
+          37.2887
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "trail_name": "Watchman Trail",
+  "trail_elevation_ft": 4400,
+  "alerts": [
+    {
+      "type": "Road Construction",
+      "scope": "trail",
+      "elevation_min_ft": 0,
+      "elevation_max_ft": 3000
+    },
+    {
+      "type": "Ice/Snow Warning",
+      "scope": "zone",
+      "elevation_min_ft": 4000,
+      "elevation_max_ft": 6000
+    }
+  ]
+}
