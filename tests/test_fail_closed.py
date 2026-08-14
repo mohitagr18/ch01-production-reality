@@ -1,8 +1,3 @@
-"""
-End-to-end proof that the system as a whole fails closed: even when the
-weather check and the geometry check are combined, incomplete evidence
-always wins over a "looks probably fine" guess.
-"""
 from src.adapters.weather_adapter import load_watchman_alerts, deterministic_safety_check
 from src.policy.constraints import evaluate_trail_safety
 
@@ -11,11 +6,9 @@ def test_end_to_end_watchman_trail_is_caution_not_safe():
     alerts = load_watchman_alerts()
     result = deterministic_safety_check(alerts)
     verdict = evaluate_trail_safety(
-        trail_name="Watchman Trail",
-        has_valid_geometry=True,
-        weather_hazards=result["hazards"],
+        trail_name="Watchman Trail", has_valid_geometry=True, weather_hazards=result["hazards"],
     )
-    assert verdict.verdict != "SAFE", "a trail under an active ice warning must never verify as SAFE"
+    assert verdict.verdict != "SAFE"
     assert verdict.verdict == "CAUTION"
 
 

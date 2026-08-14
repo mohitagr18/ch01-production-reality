@@ -1,11 +1,15 @@
 """
-Runnable entry point for Chapter 1. From the repo root:
+Runnable entry point for Chapter 1.
 
-    python -m venv .venv && source .venv/bin/activate
-    pip install -r requirements.txt
-    python scripts/run_demo.py
+Requires a Gemini API key (free tier: https://aistudio.google.com/apikey).
+Export it before running:
 
-Expected output is documented in README.md under "Expected Output."
+    export GEMINI_API_KEY=your-key-here
+    uv run scripts/run_demo.py
+
+Without a key, Demos 1 and 3 (pure data-layer demos) still run. Demo 2's
+two LLM calls are skipped with a clear message, since they require a
+live model.
 """
 import sys
 from pathlib import Path

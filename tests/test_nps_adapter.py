@@ -4,13 +4,13 @@ from src.adapters.nps_adapter import load_raw_zion_response, naive_parse, safe_p
 def test_naive_parser_drops_records_with_nested_geometry():
     raw = load_raw_zion_response()
     result = naive_parse(raw)
-    assert len(result) < len(raw["data"]), "naive parser should silently drop malformed records"
+    assert len(result) < len(raw["data"])
 
 
 def test_safe_parser_keeps_every_record():
     raw = load_raw_zion_response()
     result = safe_parse(raw)
-    assert len(result) == len(raw["data"]), "safe parser must never drop a record"
+    assert len(result) == len(raw["data"])
 
 
 def test_safe_parser_flags_invalid_geometry_instead_of_dropping():
