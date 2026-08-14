@@ -1,0 +1,19 @@
+[project]
+name = "ch01-production-reality"
+version = "0.1.0"
+description = "Chapter 1 companion code for The Write Path: The Reality of Production Environments."
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.5,<3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.uv]
+package = false

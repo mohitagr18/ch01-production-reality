@@ -18,18 +18,24 @@ about a dozen files instead of fifty.
 | 1.3 Understanding confident hallucinations under real-world stress | `src/adapters/weather_adapter.py` -- `naive_safety_check` confidently returns `True` (safe) while an active hazard is present |
 | 1.4 Designing deterministic guardrails for irreversible systems | `src/models.py` and `src/policy/constraints.py` -- Pydantic validation and a deny-by-default policy gate that can only be overridden by more evidence, never by "the model seemed confident" |
 
-## Setup
+## Setup and run (uv)
+
+This project uses [uv](https://docs.astral.sh/uv/) for dependency
+management. You do not need to create a virtual environment or run
+`pip install` manually -- `uv run` resolves and installs dependencies
+from `pyproject.toml` into an isolated environment automatically, on
+first use.
+
+Install uv once, if you don't already have it:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-## Run the demo
+Then run the demo directly:
 
 ```bash
-python scripts/run_demo.py
+uv run scripts/run_demo.py
 ```
 
 ### Expected output
@@ -63,7 +69,7 @@ Final policy verdict for 'Watchman Trail': CAUTION
 ## Run the tests
 
 ```bash
-pytest -v
+uv run pytest -v
 ```
 
 Expected: **12 passed**. The tests are the actual proof that the
@@ -84,8 +90,7 @@ guardrails work, not just the demo script's happy path:
 ```text
 .
 ├── README.md
-├── requirements.txt
-├── pytest.ini
+├── pyproject.toml            # uv/PEP 621 project + dependency definitions
 ├── src/
 │   ├── models.py              # Pydantic contracts + deterministic override
 │   ├── workflow.py            # The Orchestrator ("the Conductor")
