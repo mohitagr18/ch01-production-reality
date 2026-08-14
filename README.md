@@ -50,15 +50,39 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 Get a free Gemini API key at
-[aistudio.google.com/apikey](https://aistudio.google.com/apikey), then:
+[aistudio.google.com/apikey](https://aistudio.google.com/apikey), then
+**either** of these works:
 
 ```bash
+# Option A: .env file (recommended -- persists across terminal sessions)
 cp .env.example .env
-# edit .env and paste your key, or export it directly:
-export GEMINI_API_KEY=your-key-here
+# then edit .env and paste your key on the GEMINI_API_KEY= line
 
+# Option B: export directly in your shell
+export GEMINI_API_KEY=your-key-here
+```
+
+```bash
 uv run scripts/run_demo.py
 ```
+
+### Troubleshooting: "GEMINI_API_KEY is not set" even though I set it
+
+If you put your key in `.env` but the app still reports the key as
+missing, you're most likely running an older copy of this repo. This
+version loads `.env` automatically on startup via `load_dotenv()` in
+`src/services/llm_client.py` -- plain Python does **not** read `.env`
+files by itself, so earlier revisions of this repo required you to
+also `export` the variable manually. That extra step is no longer
+needed. Values already `export`ed in your shell still take priority
+over `.env` if both are set.
+
+If it's still not working, double-check:
+- `.env` is in the repo root (same directory as `pyproject.toml`).
+- The line reads exactly `GEMINI_API_KEY=your-actual-key`, no quotes,
+  no trailing spaces around the `=`.
+- You ran `uv run scripts/run_demo.py` again after saving `.env` (it's
+  re-read on every run).
 
 ### Using a different model
 
@@ -129,7 +153,7 @@ uv run pytest -v
 ```
 
 Expected: **16 passed, 2 skipped** without a key set (or **18 passed**
-with `GEMINI_API_KEY` exported).
+with `GEMINI_API_KEY` exported or in `.env`).
 
 - `tests/test_models.py` -- Pydantic hazard-override and enum validation.
 - `tests/test_nps_adapter.py` -- the naive parser measurably drops
@@ -163,7 +187,7 @@ with `GEMINI_API_KEY` exported).
 │   ├── policy/
 │   │   └── constraints.py        # Demo 3: the fail-closed policy gate
 │   └── services/
-│       └── llm_client.py         # The ONLY module allowed to call Gemini; model is configurable
+│       └── llm_client.py         # The ONLY module allowed to call Gemini; loads .env, model configurable
 ├── fixtures/
 │   ├── zion_raw_response.json
 │   └── watchman_weather_alert.json

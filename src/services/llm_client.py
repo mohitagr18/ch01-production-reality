@@ -4,6 +4,12 @@ place in the codebase allowed to call an external LLM API. Nothing
 downstream of the policy gate (src/policy/constraints.py) is permitted
 to import from here -- that boundary is the entire point of section 1.4.
 
+Loads GEMINI_API_KEY / GEMINI_MODEL from a .env file automatically (if
+one exists) via python-dotenv, so `cp .env.example .env` + editing the
+file is enough -- you do not also need to `export` the variables in
+your shell. Values already present in the real environment always win
+over anything in .env.
+
 The model itself is configurable via the GEMINI_MODEL environment
 variable, so a reader can point this at any Gemini model they have
 access to (e.g. a newer or lighter variant) without touching code.
@@ -11,17 +17,20 @@ access to (e.g. a newer or lighter variant) without touching code.
 import os
 from typing import List
 
+from dotenv import load_dotenv
 from google import genai
+
+load_dotenv()  # populates os.environ from a .env file, if present
 
 DEFAULT_MODEL_NAME = "gemini-2.5-flash"
 
 
 class LLMNotConfigured(RuntimeError):
-    """Raised when GEMINI_API_KEY is not set in the environment."""
+    """Raised when GEMINI_API_KEY is not set (in the shell env or .env)."""
 
 
 def _get_model_name() -> str:
-    return os.environ.get("GEMINI_MODEL", DEFAULT_MODEL_NAME)
+    return os.environ.get("GEMINI_MODEL") or DEFAULT_MODEL_NAME
 
 
 def _get_client() -> "genai.Client":
@@ -29,8 +38,9 @@ def _get_client() -> "genai.Client":
     if not api_key:
         raise LLMNotConfigured(
             "GEMINI_API_KEY is not set. Get a free key at "
-            "https://aistudio.google.com/apikey, then export it or add it "
-            "to a .env file. See README.md for setup."
+            "https://aistudio.google.com/apikey, then either export it "
+            "in your shell or add it to a .env file in the repo root. "
+            "See README.md for setup."
         )
     return genai.Client(api_key=api_key)
 
