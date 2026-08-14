@@ -1,44 +1,25 @@
-# Diagram 2: Orchestrator Sequence (The Conductor)
+# Diagram 2: What Actually Happened in Demo 2
 
-Corresponds to section 1.2. The model is not treated as a
-decision-maker. It is called twice, for two different jobs, and its
-answer in the first call has no path into the second.
-
-This trace shows a real run: Gemini reasons correctly about the one
-hazard it was given (a road-construction alert at a lower elevation
-than the trail), rules it out, and confidently concludes "safe" -- with
-no way to know about the ice/snow warning it was never told about.
+A real run of this chapter's example, in plain language: the AI
+reasons well about the one piece of information it has, and still
+reaches the wrong conclusion because it is missing a second, more
+important piece.
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant Orchestrator
-    participant Gemini
-    participant WeatherAdapter
-    participant PolicyGate
+    participant Hiker
+    participant AI as AI Model
+    participant Checker as Rule Checker
 
-    User->>Orchestrator: "Is Watchman Trail safe?"
+    Hiker->>AI: "Is Watchman Trail safe?"
+    Note over AI: Told about roadwork nearby.<br/>Not told about the ice warning.
+    AI-->>Hiker: "Safe -- the roadwork is<br/>too low to matter."
+    Note over Hiker,AI: This answer is heard, but not trusted.
 
-    rect rgb(255, 243, 205)
-    Note over Orchestrator,Gemini: Shown to the reader, never trusted
-    Orchestrator->>Gemini: ask_raw_opinion(question, incomplete context)
-    Gemini-->>Orchestrator: "Safe -- the road construction is at a lower elevation than the trail."
-    end
+    Hiker->>Checker: Check the real hazard data
+    Note over Checker: Finds an active ice warning<br/>the AI was never shown.
+    Checker-->>Hiker: Verdict: Caution
 
-    Orchestrator->>WeatherAdapter: load_watchman_alerts()
-    WeatherAdapter-->>Orchestrator: alerts (trail-scoped + zone-scoped)
-    Orchestrator->>WeatherAdapter: deterministic_safety_check(alerts)
-    WeatherAdapter-->>Orchestrator: hazards=["Ice/Snow Warning"]
-
-    Orchestrator->>PolicyGate: evaluate_trail_safety(geometry_ok, hazards)
-    Note over PolicyGate: Gemini's opinion above never enters this call
-    PolicyGate-->>Orchestrator: SafetyVerdict(verdict="CAUTION")
-
-    rect rgb(209, 231, 221)
-    Note over Orchestrator,Gemini: Narration only, verdict already fixed
-    Orchestrator->>Gemini: phrase_verdict(trail, "CAUTION", reasons)
-    Gemini-->>Orchestrator: "Heads up -- there's an active ice/snow warning, please stay safe."
-    end
-
-    Orchestrator-->>User: "Heads up -- there's an active ice/snow warning, please stay safe."
+    Hiker->>AI: Please explain this verdict
+    AI-->>Hiker: "Heads up -- there's an active<br/>ice warning, please stay safe."
 ```

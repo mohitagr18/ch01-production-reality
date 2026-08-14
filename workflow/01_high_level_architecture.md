@@ -1,31 +1,32 @@
-# Diagram 1: High-Level Architecture
+# Diagram 1: How a Question Becomes an Answer
 
-Corresponds to sections 1.1 (no undo button), 1.2-1.3 (stateless model
-limits, confident hallucinations), and 1.4 (deterministic guardrails).
+A plain-language view of the pipeline built in this chapter: the AI's
+opinion is heard but never trusted; the actual decision comes from
+checking the real data.
 
 ```mermaid
 flowchart LR
-    U["User Query<br/>'Is Watchman Trail safe?'"] --> O["Orchestrator<br/>(src/workflow.py)"]
-    O --> A1["NPS Adapter<br/>(raw geometry)"]
-    O --> A2["Weather Adapter<br/>(elevation-band alerts)"]
-    O --> L1["Gemini<br/>ask_raw_opinion()"]
+    A["A hiker asks:<br/>'Is this trail safe?'"] --> B["The AI gives<br/>an opinion"]
+    A --> C["The real data<br/>is checked"]
 
-    A1 --> N["Normalize + Flag<br/>(never silently drop)"]
-    A2 --> N
-    L1 -. "shown to reader,<br/>never trusted" .-> DISCARD["(discarded)"]
+    B -.->|"heard, but never<br/>used to decide"| X["set aside"]
 
-    N --> P["Policy Gate<br/>(src/policy/constraints.py)<br/>deny-by-default, typed input only"]
-    P --> V{"Evidence complete<br/>AND no active hazard?"}
-    V -- "yes" --> SAFE["Verdict: SAFE"]
-    V -- "hazard present" --> CAUTION["Verdict: CAUTION"]
-    V -- "no / incomplete" --> FAIL["Verdict: FAIL_CLOSED"]
+    C --> D{"Any active<br/>hazard?"}
+    D -->|no| E["Verdict: Safe"]
+    D -->|yes| F["Verdict: Caution"]
+    C --> G{"Is the data<br/>trustworthy?"}
+    G -->|no| H["Verdict: Blocked"]
 
-    SAFE --> L2["Gemini<br/>phrase_verdict()"]
-    CAUTION --> L2
-    FAIL --> L2
-    L2 --> OUT["Final user-facing message"]
+    E --> I["The AI phrases<br/>the final answer"]
+    F --> I
+    H --> I
+    I --> J["Answer to the hiker"]
 
-    style DISCARD fill:#f8d7da,stroke:#842029
-    style L1 fill:#fff3cd,stroke:#997404
-    style L2 fill:#d1e7dd,stroke:#0f5132
+    classDef setaside fill:#f8d7da,stroke:#842029,color:#111111
+    classDef opinion fill:#fff3cd,stroke:#997404,color:#111111
+    classDef final fill:#d1e7dd,stroke:#0f5132,color:#111111
+
+    class X setaside
+    class B opinion
+    class I final
 ```

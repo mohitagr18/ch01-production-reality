@@ -1,23 +1,21 @@
-# Diagram 3: Fail-Closed Decision Flow
+# Diagram 3: The Three Possible Verdicts
 
-Corresponds to section 1.4: the policy gate accepts only typed,
-pre-validated evidence, never LLM-generated free text, regardless of
-how well-reasoned that text sounds.
+However confident the AI sounds, only three outcomes are possible, and
+they are decided from the actual data, not from the AI's wording.
 
 ```mermaid
 flowchart TD
-    Start(["New Trail Record"]) --> G{"Geometry parses<br/>into a known shape?"}
-    G -- "no" --> Flag["Flag: has_valid_geometry = False<br/>(never silently dropped)"]
-    Flag --> FC["Verdict: FAIL_CLOSED<br/>(evidence_complete = False)"]
+    Start["New trail record"] --> Q1{"Can we trust<br/>the location data?"}
+    Q1 -->|no| Blocked["Verdict: Blocked<br/>(not enough evidence)"]
+    Q1 -->|yes| Q2{"Any active<br/>hazard nearby?"}
+    Q2 -->|yes| Caution["Verdict: Caution"]
+    Q2 -->|no| Safe["Verdict: Safe"]
 
-    G -- "yes" --> H{"Any active hazard<br/>overlaps elevation band?"}
-    H -- "yes" --> CA["Verdict: CAUTION<br/>status forced from Open -> Caution"]
-    H -- "no" --> SA["Verdict: SAFE<br/>(evidence_complete = True)"]
+    classDef blocked fill:#f8d7da,stroke:#842029,color:#111111
+    classDef caution fill:#fff3cd,stroke:#997404,color:#111111
+    classDef safe fill:#d1e7dd,stroke:#0f5132,color:#111111
 
-    NOTE["evaluate_trail_safety() signature:<br/>trail_name: str<br/>has_valid_geometry: bool<br/>weather_hazards: List[str]<br/><br/>No parameter accepts LLM free text,<br/>however plausible that text sounds."]
-
-    style FC fill:#f8d7da,stroke:#842029
-    style CA fill:#fff3cd,stroke:#997404
-    style SA fill:#d1e7dd,stroke:#0f5132
-    style NOTE fill:#e2e3e5,stroke:#41464b
+    class Blocked blocked
+    class Caution caution
+    class Safe safe
 ```
