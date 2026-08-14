@@ -5,9 +5,6 @@ runnable, deliberately narrow slice of the ideas from the "Digital
 Ranger" case study, rebuilt to demonstrate three specific production
 failures and the deterministic guardrails that fix them.
 
-This is **not** a copy of the full `outdoor_concierge` production app.
-It is a teaching-sized reconstruction: same failure modes, same fixes,
-about a dozen files instead of fifty.
 
 ## What this repo demonstrates
 
@@ -115,14 +112,3 @@ guardrails work, not just the demo script's happy path:
     └── run_demo.py
 ```
 
-## Relationship to the production system
-
-This repo is a teaching reconstruction of the ideas published in
-["The Ghost in the Machine vs. The Bear in the Woods"](https://medium.com/@mohitagr18/e1bd0012a8fb)
-and implemented in the full
-[`outdoor_concierge`](https://github.com/mohitagr18/outdoor_concierge)
-application. That repo is the real, deployed Streamlit app with live
-NPS/weather/places APIs, six parks of cached data, and a full UI. This
-repo strips all of that away to isolate the one architectural argument
-Chapter 1 makes: **guardrails have to be deterministic code, not a
-polite request to an LLM.**
