@@ -4,23 +4,33 @@ place in the codebase allowed to call an external LLM API. Nothing
 downstream of the policy gate (src/policy/constraints.py) is permitted
 to import from here -- that boundary is the entire point of section 1.4.
 
-Loads GEMINI_API_KEY / GEMINI_MODEL from a .env file automatically (if
-one exists) via python-dotenv, so `cp .env.example .env` + editing the
-file is enough -- you do not also need to `export` the variables in
-your shell. Values already present in the real environment always win
+Loads GEMINI_API_KEY / GEMINI_MODEL from a .env file automatically via
+python-dotenv, so `cp .env.example .env` plus editing the file is
+enough. Values already present in the shell environment always win
 over anything in .env.
 
 The model itself is configurable via the GEMINI_MODEL environment
 variable, so a reader can point this at any Gemini model they have
-access to (e.g. a newer or lighter variant) without touching code.
+access to without touching code.
 """
 import os
+import warnings
 from typing import List
 
 from dotenv import load_dotenv
 from google import genai
 
 load_dotenv()  # populates os.environ from a .env file, if present
+
+# The google-genai SDK emits an advisory warning recommending
+# Chat.send_message over Models.generate_content for automatic function
+# calling. This repo does not use function calling, so it is not
+# actionable here and is suppressed to keep demo output clean.
+warnings.filterwarnings(
+    "ignore",
+    message="Direct use of automatic function calling.*",
+    category=UserWarning,
+)
 
 DEFAULT_MODEL_NAME = "gemini-2.5-flash"
 

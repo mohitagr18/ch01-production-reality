@@ -1,7 +1,13 @@
-# Workflow Diagram 2: Orchestrator Sequence (The Conductor)
+# Diagram 2: Orchestrator Sequence (The Conductor)
 
-Corresponds to section 1.2: the model is not treated as a decision-maker.
-It is called twice, for two different, non-overlapping jobs.
+Corresponds to section 1.2. The model is not treated as a
+decision-maker. It is called twice, for two different jobs, and its
+answer in the first call has no path into the second.
+
+This trace shows a real run: Gemini reasons correctly about the one
+hazard it was given (a road-construction alert at a lower elevation
+than the trail), rules it out, and confidently concludes "safe" -- with
+no way to know about the ice/snow warning it was never told about.
 
 ```mermaid
 sequenceDiagram
@@ -14,9 +20,9 @@ sequenceDiagram
     User->>Orchestrator: "Is Watchman Trail safe?"
 
     rect rgb(255, 243, 205)
-    Note over Orchestrator,Gemini: ANTI-PATTERN (never trusted)
+    Note over Orchestrator,Gemini: Shown to the reader, never trusted
     Orchestrator->>Gemini: ask_raw_opinion(question, incomplete context)
-    Gemini-->>Orchestrator: "Yes, looks safe!" (confidently wrong)
+    Gemini-->>Orchestrator: "Safe -- the road construction is at a lower elevation than the trail."
     end
 
     Orchestrator->>WeatherAdapter: load_watchman_alerts()
@@ -29,10 +35,10 @@ sequenceDiagram
     PolicyGate-->>Orchestrator: SafetyVerdict(verdict="CAUTION")
 
     rect rgb(209, 231, 221)
-    Note over Orchestrator,Gemini: SAFE PATTERN (narration only)
+    Note over Orchestrator,Gemini: Narration only, verdict already fixed
     Orchestrator->>Gemini: phrase_verdict(trail, "CAUTION", reasons)
-    Gemini-->>Orchestrator: "Heads up: active ice/snow warning..."
+    Gemini-->>Orchestrator: "Heads up -- there's an active ice/snow warning, please stay safe."
     end
 
-    Orchestrator-->>User: "Heads up: active ice/snow warning..."
+    Orchestrator-->>User: "Heads up -- there's an active ice/snow warning, please stay safe."
 ```

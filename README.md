@@ -1,13 +1,9 @@
 # Chapter 1: The Reality of Production Environments
 
-Companion code for Chapter 1 of *The Write Path*. This repo demonstrates,
-with a real Gemini call, why a stateless language model's raw answer can
-never be trusted as a safety decision, and how a deterministic policy
-gate fixes that.
-
-This is **not** a copy of the full `outdoor_concierge` production app.
-It is a teaching-sized reconstruction: same failure modes, same fixes,
-about a dozen files instead of fifty.
+Companion code for Chapter 1 of *The Write Path*. This repo builds a
+small trail-safety assistant to demonstrate, with a real Gemini call,
+why a stateless language model's raw answer can never be trusted as a
+safety decision, and how a deterministic policy gate fixes that.
 
 ## What this repo demonstrates
 
@@ -22,8 +18,8 @@ about a dozen files instead of fifty.
 
 Section 1.3 is about a specific failure: a model answering **confidently**
 from **incomplete context**. A hand-written function that returns a
-canned wrong answer doesn't actually demonstrate that; it demonstrates a
-bug in an `if` statement. This repo calls Gemini for real, twice, for two
+canned wrong answer doesn't demonstrate that; it demonstrates a bug in
+an `if` statement. This repo calls Gemini for real, twice, for two
 structurally different jobs:
 
 1. **`ask_raw_opinion()` (the anti-pattern)** -- the model sees raw,
@@ -50,49 +46,26 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 Get a free Gemini API key at
-[aistudio.google.com/apikey](https://aistudio.google.com/apikey), then
-**either** of these works:
+[aistudio.google.com/apikey](https://aistudio.google.com/apikey):
 
 ```bash
-# Option A: .env file (recommended -- persists across terminal sessions)
 cp .env.example .env
-# then edit .env and paste your key on the GEMINI_API_KEY= line
-
-# Option B: export directly in your shell
-export GEMINI_API_KEY=your-key-here
+# edit .env and paste your key on the GEMINI_API_KEY= line
 ```
+
+Then run the demo:
 
 ```bash
 uv run scripts/run_demo.py
 ```
-
-### Troubleshooting: "GEMINI_API_KEY is not set" even though I set it
-
-If you put your key in `.env` but the app still reports the key as
-missing, you're most likely running an older copy of this repo. This
-version loads `.env` automatically on startup via `load_dotenv()` in
-`src/services/llm_client.py` -- plain Python does **not** read `.env`
-files by itself, so earlier revisions of this repo required you to
-also `export` the variable manually. That extra step is no longer
-needed. Values already `export`ed in your shell still take priority
-over `.env` if both are set.
-
-If it's still not working, double-check:
-- `.env` is in the repo root (same directory as `pyproject.toml`).
-- The line reads exactly `GEMINI_API_KEY=your-actual-key`, no quotes,
-  no trailing spaces around the `=`.
-- You ran `uv run scripts/run_demo.py` again after saving `.env` (it's
-  re-read on every run).
 
 ### Using a different model
 
 By default this repo calls `gemini-2.5-flash`. To use a different Gemini
-model you have access to, set `GEMINI_MODEL` (in `.env` or exported
-directly) -- no code changes needed:
+model, set `GEMINI_MODEL` in `.env` -- no code changes needed:
 
 ```bash
-export GEMINI_MODEL=gemini-1.5-pro
-uv run scripts/run_demo.py
+GEMINI_MODEL=gemini-1.5-pro
 ```
 
 `src/services/llm_client.py::_get_model_name()` reads this variable at
@@ -108,6 +81,8 @@ stateless model's raw answer is not a fact you can pin down or trust
 twice. What is guaranteed to be identical every time is the deterministic
 verdict (`CAUTION`), since it never depends on the model's text.
 
+Here is an actual run:
+
 ```
 === Demo 1: The Zion Vanishing Act (no undo button) ===
 Total trail records returned by NPS API: 6
@@ -120,16 +95,19 @@ Records surviving the SAFE parser:        6
 
 === Demo 2: The Confident Hallucination (live Gemini call) ===
 LLM's raw opinion (UNTRUSTED -- never fed into the policy gate):
-  "Yes, Watchman Trail looks safe to hike today!"        <- wording varies per run
+  "The Watchman Trail is safe to hike today because the reported road
+  construction is located at a lower elevation than the trail."
 
 Naive code-only check (trail-scoped alerts only): safe=True
 Deterministic check (elevation-band alerts): safe=False, hazards=['Ice/Snow Warning']
 
-Policy gate verdict (computed from typed evidence only): CAUTION    <- always identical
+Policy gate verdict (computed from typed evidence only): CAUTION
   - Active hazard(s) detected: Ice/Snow Warning.
 
 User-facing message (LLM narrates the ALREADY-DECIDED verdict):
-  "Heads up: Watchman Trail has an active ice/snow warning right now, so use caution."
+  "Hi there! Just a heads-up that we've issued a CAUTION verdict for the
+  Watchman Trail due to active ice and snow conditions. Please stay
+  safe out there!"
 
 === Demo 3: Fail-Closed Policy on Incomplete Geometry ===
 'Angels Landing': verdict=SAFE, evidence_complete=True
@@ -140,11 +118,16 @@ User-facing message (LLM narrates the ALREADY-DECIDED verdict):
 'Riverside Walk': verdict=FAIL_CLOSED, evidence_complete=False
 ```
 
-Without a key set, Demos 1 and 3 still run in full. Demo 2's two LLM
-calls print a clear `[skipped: GEMINI_API_KEY is not set...]` message
-instead of crashing, but the deterministic verdict line still runs and
-still prints `CAUTION` -- proving the policy gate never needed the model
-in the first place.
+Notice what the model actually did in Demo 2: it correctly reasoned
+that the road construction alert didn't apply, because that alert sits
+at a lower elevation than the trail. Then, having ruled out the one
+hazard it knew about, it confidently concluded the trail was safe. It
+was never told about the ice/snow warning, so it had no way to know
+otherwise. That is the failure section 1.2 and 1.3 describe: not a
+careless or lazy answer, but a well-reasoned one built on an incomplete
+picture. The policy gate below it never sees this reasoning at all --
+it only sees the hazard list, and returns `CAUTION` regardless of what
+the model concluded.
 
 ## Run the tests
 
@@ -153,7 +136,7 @@ uv run pytest -v
 ```
 
 Expected: **16 passed, 2 skipped** without a key set (or **18 passed**
-with `GEMINI_API_KEY` exported or in `.env`).
+with `GEMINI_API_KEY` configured).
 
 - `tests/test_models.py` -- Pydantic hazard-override and enum validation.
 - `tests/test_nps_adapter.py` -- the naive parser measurably drops
@@ -187,7 +170,7 @@ with `GEMINI_API_KEY` exported or in `.env`).
 │   ├── policy/
 │   │   └── constraints.py        # Demo 3: the fail-closed policy gate
 │   └── services/
-│       └── llm_client.py         # The ONLY module allowed to call Gemini; loads .env, model configurable
+│       └── llm_client.py         # The ONLY module allowed to call Gemini
 ├── fixtures/
 │   ├── zion_raw_response.json
 │   └── watchman_weather_alert.json
@@ -197,8 +180,8 @@ with `GEMINI_API_KEY` exported or in `.env`).
 │   ├── test_policy_gate.py
 │   ├── test_fail_closed.py
 │   ├── test_policy_isolation.py
-│   ├── test_llm_config.py        # tests GEMINI_MODEL override behavior
-│   └── test_llm_integration.py   # skipped without GEMINI_API_KEY
+│   ├── test_llm_config.py
+│   └── test_llm_integration.py
 ├── workflow/                     # Mermaid diagrams for the chapter text
 │   ├── 01_high_level_architecture.md
 │   ├── 02_orchestrator_sequence.md
@@ -206,16 +189,3 @@ with `GEMINI_API_KEY` exported or in `.env`).
 └── scripts/
     └── run_demo.py
 ```
-
-## Relationship to the production system
-
-This repo is a teaching reconstruction of the ideas published in
-["The Ghost in the Machine vs. The Bear in the Woods"](https://medium.com/@mohitagr18/e1bd0012a8fb)
-and implemented in the full
-[`outdoor_concierge`](https://github.com/mohitagr18/outdoor_concierge)
-application. That repo is the real, deployed Streamlit app with live
-NPS/weather/places APIs, six parks of cached data, and a full UI. This
-repo strips all of that away to isolate the one architectural argument
-Chapter 1 makes: **a stateless model will answer confidently from
-incomplete evidence, so the safety decision must be computed by
-deterministic code that the model's text can never reach.**
