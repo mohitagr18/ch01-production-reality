@@ -1,9 +1,9 @@
 # Chapter 1: The Reality of Production Environments
 
 Companion code for Chapter 1 of *The Write Path*. This repo demonstrates,
-with a real Gemini 2.5 Flash call, why a stateless language model's raw
-answer can never be trusted as a safety decision, and how a deterministic
-policy gate fixes that.
+with a real Gemini call, why a stateless language model's raw answer can
+never be trusted as a safety decision, and how a deterministic policy
+gate fixes that.
 
 This is **not** a copy of the full `outdoor_concierge` production app.
 It is a teaching-sized reconstruction: same failure modes, same fixes,
@@ -14,7 +14,7 @@ about a dozen files instead of fifty.
 | TOC section | Demonstrated by |
 |---|---|
 | 1.1 Why production systems have no undo button | `src/adapters/nps_adapter.py` -- `naive_parse` silently drops data with no error, no trace, no way to know it happened |
-| 1.2 The limits of stateless language models in enterprise settings | `src/services/llm_client.py::ask_raw_opinion` -- a real Gemini 2.5 Flash call, given the same incomplete context the naive pipeline would have produced |
+| 1.2 The limits of stateless language models in enterprise settings | `src/services/llm_client.py::ask_raw_opinion` -- a real Gemini call, given the same incomplete context the naive pipeline would have produced |
 | 1.3 Understanding confident hallucinations under real-world stress | Demo 2 in `src/workflow.py` -- the live model answers the safety question directly and confidently, without seeing the zone-level hazard |
 | 1.4 Designing deterministic guardrails for irreversible systems | `src/policy/constraints.py::evaluate_trail_safety` -- accepts only typed, pre-validated evidence (a `bool` and a `List[str]`), never LLM free text. `tests/test_policy_isolation.py` proves this structurally via signature introspection |
 
@@ -23,8 +23,8 @@ about a dozen files instead of fifty.
 Section 1.3 is about a specific failure: a model answering **confidently**
 from **incomplete context**. A hand-written function that returns a
 canned wrong answer doesn't actually demonstrate that; it demonstrates a
-bug in a `if` statement. This repo calls Gemini 2.5 Flash for real, twice,
-for two structurally different jobs:
+bug in an `if` statement. This repo calls Gemini for real, twice, for two
+structurally different jobs:
 
 1. **`ask_raw_opinion()` (the anti-pattern)** -- the model sees raw,
    incomplete context (a nearby but irrelevant "Road Construction" alert;
@@ -59,6 +59,21 @@ export GEMINI_API_KEY=your-key-here
 
 uv run scripts/run_demo.py
 ```
+
+### Using a different model
+
+By default this repo calls `gemini-2.5-flash`. To use a different Gemini
+model you have access to, set `GEMINI_MODEL` (in `.env` or exported
+directly) -- no code changes needed:
+
+```bash
+export GEMINI_MODEL=gemini-1.5-pro
+uv run scripts/run_demo.py
+```
+
+`src/services/llm_client.py::_get_model_name()` reads this variable at
+call time and falls back to `gemini-2.5-flash` if it's unset. See
+`tests/test_llm_config.py` for the tests that pin this behavior down.
 
 ### Expected output
 
@@ -113,7 +128,7 @@ in the first place.
 uv run pytest -v
 ```
 
-Expected: **14 passed, 2 skipped** without a key set (or **16 passed**
+Expected: **16 passed, 2 skipped** without a key set (or **18 passed**
 with `GEMINI_API_KEY` exported).
 
 - `tests/test_models.py` -- Pydantic hazard-override and enum validation.
@@ -126,6 +141,8 @@ with `GEMINI_API_KEY` exported).
   `inspect.signature`) that the policy gate has no parameter capable of
   accepting LLM-generated free text, and that its output type is a
   closed three-value enum, not an arbitrary string.
+- `tests/test_llm_config.py` -- proves `GEMINI_MODEL` is read live from
+  the environment and falls back to `gemini-2.5-flash` when unset.
 - `tests/test_llm_integration.py` -- live calls against the real Gemini
   API. Automatically skipped when `GEMINI_API_KEY` is absent, so the
   suite never fails for a reader who hasn't set up a key yet.
@@ -146,7 +163,7 @@ with `GEMINI_API_KEY` exported).
 │   ├── policy/
 │   │   └── constraints.py        # Demo 3: the fail-closed policy gate
 │   └── services/
-│       └── llm_client.py         # The ONLY module allowed to call Gemini
+│       └── llm_client.py         # The ONLY module allowed to call Gemini; model is configurable
 ├── fixtures/
 │   ├── zion_raw_response.json
 │   └── watchman_weather_alert.json
@@ -156,6 +173,7 @@ with `GEMINI_API_KEY` exported).
 │   ├── test_policy_gate.py
 │   ├── test_fail_closed.py
 │   ├── test_policy_isolation.py
+│   ├── test_llm_config.py        # tests GEMINI_MODEL override behavior
 │   └── test_llm_integration.py   # skipped without GEMINI_API_KEY
 ├── workflow/                     # Mermaid diagrams for the chapter text
 │   ├── 01_high_level_architecture.md

@@ -1,20 +1,27 @@
 """
-Thin wrapper around Gemini 2.5 Flash. This module is intentionally the
-ONLY place in the codebase allowed to call an external LLM API.
-Nothing downstream of the policy gate (src/policy/constraints.py) is
-permitted to import from here -- that boundary is the entire point of
-section 1.4.
+Thin wrapper around Gemini. This module is intentionally the ONLY
+place in the codebase allowed to call an external LLM API. Nothing
+downstream of the policy gate (src/policy/constraints.py) is permitted
+to import from here -- that boundary is the entire point of section 1.4.
+
+The model itself is configurable via the GEMINI_MODEL environment
+variable, so a reader can point this at any Gemini model they have
+access to (e.g. a newer or lighter variant) without touching code.
 """
 import os
 from typing import List
 
 from google import genai
 
-MODEL_NAME = "gemini-2.5-flash"
+DEFAULT_MODEL_NAME = "gemini-2.5-flash"
 
 
 class LLMNotConfigured(RuntimeError):
     """Raised when GEMINI_API_KEY is not set in the environment."""
+
+
+def _get_model_name() -> str:
+    return os.environ.get("GEMINI_MODEL", DEFAULT_MODEL_NAME)
 
 
 def _get_client() -> "genai.Client":
@@ -42,7 +49,7 @@ def ask_raw_opinion(question: str, context: str) -> str:
         "in one or two sentences, based only on the context provided.\n\n"
         f"Context:\n{context}\n\nQuestion: {question}"
     )
-    response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+    response = client.models.generate_content(model=_get_model_name(), contents=prompt)
     return (response.text or "").strip()
 
 
@@ -62,5 +69,5 @@ def phrase_verdict(trail_name: str, verdict: str, reasons: List[str]) -> str:
         "verdict.\n\n"
         f"Trail: {trail_name}\nVerdict: {verdict}\nReasons: {'; '.join(reasons)}"
     )
-    response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+    response = client.models.generate_content(model=_get_model_name(), contents=prompt)
     return (response.text or "").strip()
